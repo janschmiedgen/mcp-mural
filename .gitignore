@@ -1,0 +1,8 @@
+node_modules/
+build/
+.mural-mcp/
+tokens.json
+.env
+.env.*
+*.pem
+.DS_Store
