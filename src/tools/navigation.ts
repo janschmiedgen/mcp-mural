@@ -4,6 +4,7 @@ import { filterAllowedWorkspaces, isWorkspaceAllowed, getWorkspaceGuardError } f
 import type { Workspace, Room, Mural, ListResponse, SingleResponse } from "../types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { stripWorkspace, stripRoom, stripMural } from "../utils/strip.js";
+import { normalizeMuralId, MURAL_ID_DESC } from "../utils/normalize.js";
 
 function text(t: string) {
   return { content: [{ type: "text" as const, text: t }] };
@@ -77,9 +78,11 @@ export function registerNavigationTools(server: McpServer) {
     "get_mural",
     "Get metadata for a specific mural (stripped to key fields)",
     {
-      muralId: z.string().describe("Mural ID"),
+      muralId: z.string().describe(MURAL_ID_DESC),
     },
-    async ({ muralId }) => {
+    async ({ muralId: rawMuralId }) => {
+      const { id: muralId, error } = normalizeMuralId(rawMuralId);
+      if (error) return textErr(error);
       const data = await muralApi.get<SingleResponse<Mural>>(
         `/murals/${muralId}`
       );

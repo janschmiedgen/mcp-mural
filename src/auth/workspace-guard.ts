@@ -32,3 +32,7 @@ export function filterAllowedWorkspaces<T extends { id: string }>(workspaces: T[
 export function isGuardEnabled(): boolean {
   return allowedWorkspaces !== null;
 }
+
+export function getAllowedWorkspaces(): Set<string> | null {
+  return allowedWorkspaces;
+}
