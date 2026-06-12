@@ -3,13 +3,10 @@ import { muralApi } from "../client/mural-api.js";
 import type { Widget, ListResponse, SingleResponse } from "../types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { stripWidget, stripWidgets } from "../utils/strip.js";
-import { normalizeMuralId, MURAL_ID_DESC } from "../utils/normalize.js";
+import { muralIdSchema } from "../utils/normalize.js";
 
 function text(t: string) {
   return { content: [{ type: "text" as const, text: t }] };
-}
-function textErr(t: string) {
-  return { content: [{ type: "text" as const, text: t }], isError: true };
 }
 
 export function registerWidgetReadTools(server: McpServer) {
@@ -18,7 +15,7 @@ export function registerWidgetReadTools(server: McpServer) {
     "get_widgets",
     "List widgets on a mural (stripped to key fields). Default limit 50. Use 'next' cursor to paginate.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       type: z
         .enum([
           "sticky note",
@@ -44,9 +41,7 @@ export function registerWidgetReadTools(server: McpServer) {
         .optional()
         .describe("Pagination cursor from a previous response"),
     },
-    async ({ muralId: rawMuralId, type, limit, next }) => {
-      const { id: muralId, error } = normalizeMuralId(rawMuralId);
-      if (error) return textErr(error);
+    async ({ muralId, type, limit, next }) => {
       const effectiveLimit = limit ?? 50;
       const params: Record<string, string> = { limit: String(effectiveLimit) };
       if (type) params.type = type;
@@ -73,12 +68,10 @@ export function registerWidgetReadTools(server: McpServer) {
     "get_widget",
     "Get a single widget by ID (stripped to key fields).",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID"),
     },
-    async ({ muralId: rawMuralId, widgetId }) => {
-      const { id: muralId, error } = normalizeMuralId(rawMuralId);
-      if (error) return textErr(error);
+    async ({ muralId, widgetId }) => {
       const data = await muralApi.get<SingleResponse<Widget>>(
         `/murals/${muralId}/widgets/${widgetId}`
       );

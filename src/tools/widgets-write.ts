@@ -4,7 +4,7 @@ import type { Widget, SingleResponse, ListResponse } from "../types.js";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { imageSize } from "image-size";
 import { batchResponse, singleResponse } from "../utils/strip.js";
-import { normalizeMuralId, MURAL_ID_DESC } from "../utils/normalize.js";
+import { muralIdSchema } from "../utils/normalize.js";
 
 // --- Constants ---
 
@@ -62,7 +62,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_sticky_notes",
     "Create sticky notes on a mural (batch, up to 1000). Returns IDs.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       stickies: z
         .array(
           z.object({
@@ -83,8 +83,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         .min(1)
         .max(1000),
     },
-    async ({ muralId: rawMuralId, stickies }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, stickies }) => {
       const body = stickies.map((s) => ({
         x: s.x,
         y: s.y,
@@ -108,7 +107,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "update_sticky_note",
     "Update a sticky note (text, position, color, size)",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID"),
       text: z.string().optional(),
       x: z.number().optional(),
@@ -117,8 +116,7 @@ export function registerWidgetWriteTools(server: McpServer) {
       height: z.number().optional(),
       backgroundColor: colorSchema,
     },
-    async ({ muralId: rawMuralId, widgetId, ...changes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, widgetId, ...changes }) => {
       const body: Record<string, unknown> = {};
       if (changes.text !== undefined) body.text = changes.text;
       if (changes.x !== undefined) body.x = changes.x;
@@ -145,7 +143,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_text_boxes",
     "Create text boxes on a mural (batch, up to 1000). Returns IDs.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       textBoxes: z
         .array(
           z.object({
@@ -164,8 +162,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         .min(1)
         .max(1000),
     },
-    async ({ muralId: rawMuralId, textBoxes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, textBoxes }) => {
       const data = await muralApi.post<ListResponse<Widget>>(
         `/murals/${muralId}/widgets/textbox`,
         textBoxes
@@ -179,7 +176,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "update_text_box",
     "Update a text box on a mural",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID"),
       text: z.string().optional(),
       x: z.number().optional(),
@@ -187,8 +184,7 @@ export function registerWidgetWriteTools(server: McpServer) {
       width: z.number().optional(),
       height: z.number().optional(),
     },
-    async ({ muralId: rawMuralId, widgetId, ...changes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, widgetId, ...changes }) => {
       const body: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(changes)) {
         if (value !== undefined) body[key] = value;
@@ -211,7 +207,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_shapes",
     "Create shapes on a mural (batch, up to 1000). Common shapes: rectangle, circle, diamond, triangle, star, hexagon. Full list validated server-side.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       shapes: z
         .array(
           z.object({
@@ -232,8 +228,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         .min(1)
         .max(1000),
     },
-    async ({ muralId: rawMuralId, shapes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, shapes }) => {
       // Server-side shape validation
       for (const s of shapes) {
         if (s.shape && !VALID_SHAPES.has(s.shape)) {
@@ -254,7 +249,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "update_shape",
     "Update a shape on a mural",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID"),
       text: z.string().optional(),
       x: z.number().optional(),
@@ -263,8 +258,7 @@ export function registerWidgetWriteTools(server: McpServer) {
       height: z.number().optional(),
       backgroundColor: colorSchema,
     },
-    async ({ muralId: rawMuralId, widgetId, ...changes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, widgetId, ...changes }) => {
       const body: Record<string, unknown> = {};
       if (changes.text !== undefined) body.text = changes.text;
       if (changes.x !== undefined) body.x = changes.x;
@@ -291,15 +285,14 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_area",
     "Create an area (grouping section) on a mural.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       ...positionSchema,
       width: z.number().describe("Width in px"),
       height: z.number().describe("Height in px"),
       title: z.string().optional(),
       backgroundColor: colorSchema,
     },
-    async ({ muralId: rawMuralId, ...params }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId,...params }) => {
       const body: Record<string, unknown> = {
         x: params.x,
         y: params.y,
@@ -323,7 +316,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "update_area",
     "Update an area on a mural",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID"),
       title: z.string().optional(),
       x: z.number().optional(),
@@ -332,8 +325,7 @@ export function registerWidgetWriteTools(server: McpServer) {
       height: z.number().optional(),
       backgroundColor: colorSchema,
     },
-    async ({ muralId: rawMuralId, widgetId, ...changes }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, widgetId, ...changes }) => {
       const body: Record<string, unknown> = {};
       if (changes.title !== undefined) body.title = changes.title;
       if (changes.x !== undefined) body.x = changes.x;
@@ -360,14 +352,13 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_image",
     "Add an image to a mural from a public URL. Auto-detects dimensions. Max 10MB.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       ...positionSchema,
       url: z.string().url().describe("Public URL of the image"),
       width: z.number().optional().describe("Override width (default: original)"),
       height: z.number().optional().describe("Override height (default: original)"),
     },
-    async ({ muralId: rawMuralId, x, y, url, width, height }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, x, y, url, width, height }) => {
       // Step 1: Download
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Failed to download image: ${response.status}`);
@@ -427,7 +418,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "connect_widgets",
     "Draw a connected arrow between two widgets. Provide source/target IDs and positions.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       sourceWidgetId: z.string().describe("Widget ID arrow starts FROM (tail)"),
       targetWidgetId: z.string().describe("Widget ID arrow points TO (head)"),
       sourceX: z.number(), sourceY: z.number(),
@@ -442,8 +433,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         })
         .optional(),
     },
-    async ({ muralId: rawMuralId, sourceWidgetId, targetWidgetId, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, arrowType, style }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, sourceWidgetId, targetWidgetId, sourceX, sourceY, sourceWidth, sourceHeight, targetX, targetY, arrowType, style }) => {
       const arrowX = sourceX + sourceWidth;
       const arrowY = sourceY + sourceHeight / 2;
       const arrowWidth = targetX - arrowX;
@@ -477,7 +467,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "connect_widgets_batch",
     "Connect multiple widget pairs with arrows in one call. Returns all arrow IDs.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       connections: z
         .array(
           z.object({
@@ -500,8 +490,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         .optional()
         .describe("Style applied to all arrows"),
     },
-    async ({ muralId: rawMuralId, connections, style }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, connections, style }) => {
       const results: Widget[] = [];
       const errors: string[] = [];
 
@@ -548,7 +537,7 @@ export function registerWidgetWriteTools(server: McpServer) {
     "create_arrow",
     "Draw a freeform arrow (not snapped to widgets). For connected arrows, use connect_widgets.",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       ...positionSchema,
       width: z.number().describe("Bounding box width"),
       height: z.number().describe("Bounding box height"),
@@ -564,8 +553,7 @@ export function registerWidgetWriteTools(server: McpServer) {
         })
         .optional(),
     },
-    async ({ muralId: rawMuralId, x, y, width, height, points, style }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, x, y, width, height, points, style }) => {
       const body: Record<string, unknown> = { x, y, width, height, points };
       if (style) body.style = style;
 
@@ -586,11 +574,10 @@ export function registerWidgetWriteTools(server: McpServer) {
     "delete_widget",
     "Delete any widget from a mural by ID",
     {
-      muralId: z.string().describe(MURAL_ID_DESC),
+      muralId: muralIdSchema,
       widgetId: z.string().describe("Widget ID to delete"),
     },
-    async ({ muralId: rawMuralId, widgetId }) => {
-      const { id: muralId, error: muralIdErr } = normalizeMuralId(rawMuralId); if (muralIdErr) return textErr(muralIdErr);
+    async ({ muralId, widgetId }) => {
       await muralApi.delete(`/murals/${muralId}/widgets/${widgetId}`);
       return text(`Deleted widget ${widgetId}`);
     }
