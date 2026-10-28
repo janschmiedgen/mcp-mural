@@ -66,8 +66,8 @@ All tool responses are optimized for minimal token usage:
 ### 2. Install & Build
 
 ```bash
-git clone https://github.com/janschmiedgen/mural-mcp.git
-cd mural-mcp
+git clone https://github.com/janschmiedgen/mcp-mural.git
+cd mcp-mural
 npm install
 npm run build
 ```
@@ -91,7 +91,7 @@ Add as a CLI MCP Server in **Settings → MCP Servers**:
 ```json
 {
   "command": "node",
-  "args": ["/path/to/mural-mcp/build/index.js"],
+  "args": ["/path/to/mcp-mural/build/index.js"],
   "env": {
     "MURAL_CLIENT_ID": "your_client_id",
     "MURAL_CLIENT_SECRET": "your_client_secret"
@@ -108,7 +108,7 @@ Add to `~/.cursor/mcp.json`:
   "mcpServers": {
     "mural": {
       "command": "node",
-      "args": ["/path/to/mural-mcp/build/index.js"],
+      "args": ["/path/to/mcp-mural/build/index.js"],
       "env": {
         "MURAL_CLIENT_ID": "your_client_id",
         "MURAL_CLIENT_SECRET": "your_client_secret"
@@ -121,7 +121,7 @@ Add to `~/.cursor/mcp.json`:
 ### Claude Code
 
 ```bash
-claude mcp add mural -- node /path/to/mural-mcp/build/index.js
+claude mcp add mural -- node /path/to/mcp-mural/build/index.js
 ```
 
 Set `MURAL_CLIENT_ID` and `MURAL_CLIENT_SECRET` in your shell environment.

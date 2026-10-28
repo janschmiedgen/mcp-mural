@@ -1,5 +1,5 @@
 {
-  "name": "mural-mcp",
+  "name": "mcp-mural",
   "version": "1.0.0",
   "description": "MCP server for Mural visual collaboration platform — focused on board content editing",
   "type": "module",
